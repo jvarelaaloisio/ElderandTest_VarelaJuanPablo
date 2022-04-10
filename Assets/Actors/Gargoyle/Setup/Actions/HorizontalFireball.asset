@@ -1,0 +1,20 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: db591e481867713438765a7ac73ac446, type: 3}
+  m_Name: HorizontalFireball
+  m_EditorClassIdentifier: 
+  delay: 0.5
+  duration: 0.5
+  angle: 0
+  fireballPrefab: {fileID: 496371298232626850, guid: ac1e2c37dad31974d876a4811a83113d,
+    type: 3}
+  spawnOffset: {x: 0.75, y: 0, z: 0}

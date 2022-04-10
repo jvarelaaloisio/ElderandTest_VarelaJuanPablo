@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using UnityEngine;
 
 namespace Core.Actors
@@ -9,7 +10,7 @@ namespace Core.Actors
 		event Action<string> OnActing;
 		Transform transform { get; }
 		string CurrentState { get; }
-		void Awake();
-		void Act(IAction action);
+		void RunFirstDelayBeforeAction();
+		void Act(IAction action, IEnumerator afterBehaviour = null);
 	}
 }

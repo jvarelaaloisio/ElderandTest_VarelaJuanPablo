@@ -12,13 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 930c26238b7d4e0d8ae5288e82024dfb, type: 3}
   m_Name: Gargoyle
   m_EditorClassIdentifier: 
-  meleeDistance: 2
-  delayToAct: 2
-  moveSpeed: 0
-  takeOffSpeed: 0
-  ladingSpeed: 0
-  flyingDiveSpeed: 0
-  fireballSpeed: 0
-  fireballDamage: 0
-  clawDamage: 0
-  flyingDiveDamage: 0
+  delayToAct: 1
+  moveSpeed: 0.7
+  takeOffSpeed: 0.75
+  landingSpeed: 0.75

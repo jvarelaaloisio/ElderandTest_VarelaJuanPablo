@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using UnityEngine;
 using Random = UnityEngine.Random;
 
 namespace IA.DecisionTree
@@ -23,14 +24,14 @@ namespace IA.DecisionTree
 			foreach (var current in _outcomesWithChance)
 			{
 				random -= current.Value;
-				if (random < 0)
-				{
-					ChangeNode(current.Key);
-				}
+				if (random >= 0)
+					continue;
+				ChangeNode(current.Key);
+				return;
 			}
 
-			//TODO:Revisar si printear el diccionario muestra la data o no
-			throw new ArgumentOutOfRangeException($"Roulette couldn't make a decission\n{_outcomesWithChance}");
+			throw new ArgumentOutOfRangeException("outcomesWithChance",
+												"Roulette couldn't make a decision");
 		}
 	}
 }

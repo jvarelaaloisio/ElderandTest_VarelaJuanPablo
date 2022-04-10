@@ -9,136 +9,109 @@ namespace Actors
 {
 	public class FlyingActor : IFlyingActor
 	{
-		private const string GroundedStateKey = "Grounded";
-		private const string FlyingStateKey = "Flying";
+		private const string GroundStateKey = "Grounded";
+		private const string AirStateKey = "Air";
 		private readonly FiniteStateMachine<string> _stateMachine;
-		private readonly IFlyingActorModel _model;
 		private readonly ICoroutineRunner _coroutineRunner;
 
+		/// <summary>
+		/// Event fired every time the actor can Act once again.
+		/// </summary>
 		public event Action OnCanAct = delegate { };
+
+		/// <summary>
+		/// Event fired when the actor does an action. The string is the name of the action.
+		/// </summary>
 		public event Action<string> OnActing = delegate { };
 
+		/// <summary>
+		/// Event fired when the actor takes off from the ground
+		/// </summary>
 		public event Action OnTakeOff = delegate { };
+
+		/// <summary>
+		/// Event fired when the actor lands
+		/// </summary>
 		public event Action OnLanding = delegate { };
+
 		public Transform transform { get; }
-		public Transform Target { get; }
 
 		public string CurrentState => _stateMachine.CurrentState.Name;
+
+		public IFlyingActorModel Model { get; }
 
 		public FlyingActor(IFlyingActorModel model,
 							ICoroutineRunner coroutineRunner,
 							Transform transform,
-							Transform target,
 							bool shouldLogTransitions = true)
 		{
-			_model = model;
+			Model = model;
 			_coroutineRunner = coroutineRunner;
 			this.transform = transform;
-			Target = target;
-			State<string> flying = new State<string>(FlyingStateKey);
-			State<string> grounded = new State<string>(GroundedStateKey);
+			State<string> air = new State<string>(AirStateKey);
+			State<string> grounded = new State<string>(GroundStateKey);
 
-			flying.AddTransition(GroundedStateKey, grounded);
-			grounded.AddTransition(FlyingStateKey, flying);
+			air.AddTransition(GroundStateKey, grounded);
+			grounded.AddTransition(AirStateKey, air);
 
 			_stateMachine = FiniteStateMachine<string>
-				.Build(flying, transform.gameObject.name)
+				.Build(air, transform.gameObject.name)
 				.WithThisLogger(Debug.unityLogger)
 				.ThatLogsTransitions(shouldLogTransitions)
 				.Done();
 		}
 
-		//TODO:Change Name
-		public void Awake()
-			=> _coroutineRunner.StartCoroutine(RaiseCanActEventAfterDelay(_model.DelayToAct));
+		public void RunFirstDelayBeforeAction()
+			=> _coroutineRunner.StartCoroutine(RaiseCanActEventAfterDelay(Model.DelayToAct));
 
-		public void Act(IFlyingAction flyingAction)
+		public void Act(IFlyingAction flyingAction, IEnumerator afterBehaviour = null)
 		{
-			_coroutineRunner.StartCoroutine(RunAction(flyingAction));
+			_coroutineRunner.StartCoroutine(RunAction(flyingAction, afterBehaviour));
 		}
 
-		//TODO:Move To base Actor class
-		public void Act(IAction action)
+		public void Act(IAction action, IEnumerator afterBehaviour = null)
 		{
-			_coroutineRunner.StartCoroutine(RunAction(action));
+			_coroutineRunner.StartCoroutine(RunAction(action, afterBehaviour));
 		}
 
-		private IEnumerator RunAction(IFlyingAction flyingAction)
+		private IEnumerator RunAction(IFlyingAction flyingAction, IEnumerator afterBehaviour = null)
 		{
 			OnActing(flyingAction.Name);
-			yield return flyingAction.Behaviour(this, _model);
-			yield return RaiseCanActEventAfterDelay(_model.DelayToAct);
+			yield return flyingAction.Behaviour(this, Model);
+			yield return afterBehaviour;
+			yield return RaiseCanActEventAfterDelay(Model.DelayToAct);
 		}
 
-		//TODO:Move To base Actor class
-		private IEnumerator RunAction(IAction action)
+		private IEnumerator RunAction(IAction action, IEnumerator afterBehaviour = null)
 		{
 			OnActing(action.Name);
-			yield return action.Behaviour(this, _model);
-			yield return RaiseCanActEventAfterDelay(_model.DelayToAct);
+			yield return action.Behaviour(this, Model);
+			yield return afterBehaviour;
+			yield return RaiseCanActEventAfterDelay(Model.DelayToAct);
 		}
 
-		public void TakeOff()
-		{
-			OnTakeOff();
-			//TODO:Impplement
-			_stateMachine.TransitionTo(FlyingStateKey);
-			_coroutineRunner.StartCoroutine(RaiseCanActEventAfterDelay(_model.DelayToAct));
-			throw new NotImplementedException();
-		}
+		public void TakeOff(IEnumerator takeOffBehaviour)
+			=> _coroutineRunner.StartCoroutine(RunStateChangeBehaviour(takeOffBehaviour, OnTakeOff, AirStateKey));
 
-		public void Land()
-		{
-			OnLanding();
-			//TODO:Impplement
-			_stateMachine.TransitionTo(GroundedStateKey);
-			_coroutineRunner.StartCoroutine(RaiseCanActEventAfterDelay(_model.DelayToAct));
-			throw new NotImplementedException();
-		}
+		public void Land(IEnumerator landBehaviour)
+			=> _coroutineRunner.StartCoroutine(RunStateChangeBehaviour(landBehaviour, OnLanding, GroundStateKey));
 
-		public void Melee()
-		{
-			// OnMelee();
-			//TODO:Implement
-			//Target.damageable.takeDamage
-			_coroutineRunner.StartCoroutine(RaiseCanActEventAfterDelay(_model.DelayToAct));
-			throw new NotImplementedException();
-		}
-
-		public void FlyingDive()
-		{
-			// OnDiving();
-			// OnDived();
-			//TODO:Implement
-			_coroutineRunner.StartCoroutine(RaiseCanActEventAfterDelay(_model.DelayToAct));
-			throw new NotImplementedException();
-		}
-
-		public void ThrowFireBall()
-		{
-			// OnFireball();
-			//TODO:Implement
-			_coroutineRunner.StartCoroutine(RaiseCanActEventAfterDelay(_model.DelayToAct));
-			throw new NotImplementedException();
-		}
-
-		public void ThrowFireBallWithAngle()
-		{
-			//TODO:Implement
-			_coroutineRunner.StartCoroutine(RaiseCanActEventAfterDelay(_model.DelayToAct));
-			throw new NotImplementedException();
-		}
-
-		[Obsolete]
-		public bool IsTargetClose()
-			=> Vector3.Distance(Target.position, transform.position) <= _model.MeleeDistance;
-
-		public bool IsGrounded() => CurrentState == GroundedStateKey;
+		public bool IsGrounded() => CurrentState == GroundStateKey;
 
 		private IEnumerator RaiseCanActEventAfterDelay(float delay)
 		{
 			yield return new WaitForSeconds(delay);
 			OnCanAct();
+		}
+
+		private IEnumerator RunStateChangeBehaviour(IEnumerator behaviour,
+													Action onFinish,
+													string stateMachineTransitionKey)
+		{
+			yield return behaviour;
+			onFinish();
+			_stateMachine.TransitionTo(stateMachineTransitionKey);
+			_coroutineRunner.StartCoroutine(RaiseCanActEventAfterDelay(Model.DelayToAct));
 		}
 	}
 }

@@ -1,7 +1,8 @@
 {
-    "name": "VarelaAloisio.ElderandTest.Debugging",
+    "name": "VarelaAloisio.ElderandTest.Actors",
     "references": [
-        "GUID:138c70078136bbc43814334e7d840bf5"
+        "GUID:a97c41a1983f2ec4a9f57ca8ec22303e",
+        "GUID:8f906b125f01afa478beb61975b2ac12"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

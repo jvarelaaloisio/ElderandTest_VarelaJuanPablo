@@ -4,6 +4,7 @@ using Actors;
 using Actors.Actions;
 using Core.Actors;
 using IA.DecisionTree;
+using Paths;
 using UnityEngine;
 
 namespace Enemies.Gargoyle
@@ -16,26 +17,36 @@ namespace Enemies.Gargoyle
 		private const string FlyingDiveKey = "FlyingDive";
 		private const string HorizontalFireball = "HorizontalFireball";
 		private const string DiagonalFireball = "DiagonalFireball";
+
 		private readonly FlyingActor _actor;
-		private readonly Melee _meleeAction;
-		private readonly IFlyingAction _flyingDiveAction;
-		private readonly IFlyingAction _throwFireballAction;
-		private readonly IFlyingAction _throwFireballWithAngleAction;
+
 		private Tree<string> _tree;
-		private readonly Dictionary<string, Action> _actionsWithBehaviours;
 		private string _lastTreeAnswer;
 
+		private readonly Dictionary<string, Action> _actionsWithBehaviours;
+		private readonly Melee _meleeAction;
+		private readonly IFlyingAction _flyingDiveAction;
+		private readonly IAction _throwHorizontalFireballAction;
+		private readonly IAction _throwDiagonalFireballAction;
+
+		private readonly bool _shouldLogTreeDecisions;
+		private PathTraveler _pathTraveler;
+
 		public GargoyleAIController(FlyingActor actor,
+									PathTraveler pathTraveler,
 									Melee meleeAction,
 									IFlyingAction flyingDiveAction,
-									IFlyingAction throwFireballAction,
-									IFlyingAction throwFireballWithAngleAction)
+									IAction throwHorizontalFireballAction,
+									IAction throwDiagonalFireballAction,
+									bool shouldLogTreeDecisions)
 		{
 			_actor = actor;
+			_pathTraveler = pathTraveler;
 			_meleeAction = meleeAction;
 			_flyingDiveAction = flyingDiveAction;
-			_throwFireballAction = throwFireballAction;
-			_throwFireballWithAngleAction = throwFireballWithAngleAction;
+			_throwHorizontalFireballAction = throwHorizontalFireballAction;
+			_throwDiagonalFireballAction = throwDiagonalFireballAction;
+			_shouldLogTreeDecisions = shouldLogTreeDecisions;
 			//------ Setup Tree  ------
 			TreeAction<string> fly = new TreeAction<string>(FlyKey);
 			TreeAction<string> land = new TreeAction<string>(LandKey);
@@ -70,12 +81,29 @@ namespace Enemies.Gargoyle
 			//------ Action behaviours  ------
 			_actionsWithBehaviours = new Dictionary<string, Action>()
 									{
-										{FlyKey, actor.TakeOff},
-										{LandKey, actor.Land},
-										{MeleeKey, () => actor.Act(meleeAction)},
-										{FlyingDiveKey, () => actor.Act(flyingDiveAction)},
-										{HorizontalFireball, () => actor.Act(throwFireballAction)},
-										{DiagonalFireball, () => actor.Act(throwFireballWithAngleAction)}
+										{FlyKey, () => actor.TakeOff(pathTraveler.Fly(1 / actor.Model.TakeOffSpeed))},
+										{LandKey, () => actor.Land(pathTraveler.Land(1 / actor.Model.LandingSpeed))},
+										{
+											MeleeKey,
+											() => actor.Act(_meleeAction,
+															pathTraveler
+																.GoToNextPoint(1 / actor.Model.MoveSpeed))
+										},
+										{
+											FlyingDiveKey, () => actor.Act(_flyingDiveAction)
+										},
+										{
+											HorizontalFireball,
+											() => actor.Act(_throwHorizontalFireballAction,
+															pathTraveler
+																.GoToNextPoint(1 / actor.Model.MoveSpeed))
+										},
+										{
+											DiagonalFireball,
+											() => actor.Act(_throwDiagonalFireballAction,
+															pathTraveler
+																.GoToNextPoint(1 / actor.Model.MoveSpeed))
+										}
 									};
 
 			//------ Subscribe to the character Can Act event  ------
@@ -95,7 +123,8 @@ namespace Enemies.Gargoyle
 			}
 
 			_lastTreeAnswer = answer;
-			Debug.Log($"{_actor.transform.name}: This character's tree has decided to do: {answer}");
+			if (_shouldLogTreeDecisions)
+				Debug.Log($"{_actor.transform.name}: This character's tree has decided to do: {answer}");
 			if (_actionsWithBehaviours.TryGetValue(answer, out Action behaviour))
 				behaviour();
 			else
