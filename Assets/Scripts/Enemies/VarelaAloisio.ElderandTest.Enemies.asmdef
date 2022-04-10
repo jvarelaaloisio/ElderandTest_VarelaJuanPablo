@@ -1,0 +1,17 @@
+{
+    "name": "VarelaAloisio.ElderandTest.Enemies",
+    "references": [
+        "GUID:a97c41a1983f2ec4a9f57ca8ec22303e",
+        "GUID:85e3b6ae502c88f44b809608c8a21307",
+        "GUID:138c70078136bbc43814334e7d840bf5"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
