@@ -49,7 +49,9 @@ namespace Actors
 			_coroutineRunner = coroutineRunner;
 			this.transform = transform;
 			State<string> air = new State<string>(AirStateKey);
+			air.OnAwake += OnTakeOff;
 			State<string> grounded = new State<string>(GroundStateKey);
+			grounded.OnAwake += OnLanding;
 
 			air.AddTransition(GroundStateKey, grounded);
 			grounded.AddTransition(AirStateKey, air);
@@ -91,10 +93,10 @@ namespace Actors
 		}
 
 		public void TakeOff(IEnumerator takeOffBehaviour)
-			=> _coroutineRunner.StartCoroutine(RunStateChangeBehaviour(takeOffBehaviour, OnTakeOff, AirStateKey));
+			=> _coroutineRunner.StartCoroutine(RunStateChangeBehaviour(takeOffBehaviour, AirStateKey));
 
 		public void Land(IEnumerator landBehaviour)
-			=> _coroutineRunner.StartCoroutine(RunStateChangeBehaviour(landBehaviour, OnLanding, GroundStateKey));
+			=> _coroutineRunner.StartCoroutine(RunStateChangeBehaviour(landBehaviour, GroundStateKey));
 
 		public bool IsGrounded() => CurrentState == GroundStateKey;
 
@@ -105,11 +107,9 @@ namespace Actors
 		}
 
 		private IEnumerator RunStateChangeBehaviour(IEnumerator behaviour,
-													Action onFinish,
 													string stateMachineTransitionKey)
 		{
 			yield return behaviour;
-			onFinish();
 			_stateMachine.TransitionTo(stateMachineTransitionKey);
 			_coroutineRunner.StartCoroutine(RaiseCanActEventAfterDelay(Model.DelayToAct));
 		}
